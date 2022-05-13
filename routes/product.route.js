@@ -7,6 +7,8 @@ const multer = require('multer');
 const xlsx = require('xlsx');
 const path = require('path')
 const upload = multer({storage : storageMulter.storage})
+const crypto = require("crypto");
+
 
 
 // const {sendNotifi} = require('../middleware/notification')
@@ -232,7 +234,7 @@ try{
 router.post('/bulkupload',upload.single('file'), async(req,res)=>{
     try{
         let path = './uploads/' + req.file.originalname
-        console.log(path)
+        console.log("file path==>",path)
         let sheetdetail = xlsx.readFile(path);
         let sheet_list = sheetdetail.SheetNames;
         console.log(sheet_list);
@@ -245,6 +247,43 @@ router.post('/bulkupload',upload.single('file'), async(req,res)=>{
         return res.status(500).json({status:'failure',message:'File not uploaded...'}) 
        }
     });
-
+    //Adding products with xlsx
+    router.post('/bulkupload2',upload.single('file'), async(req,res)=>{
+        try{
+            let path = './uploads/' + req.file.originalname
+            console.log("file path==>",path)
+            let sheetdetail1 = xlsx.readFile(path);
+            let sheet_list = sheetdetail1.SheetNames;
+            console.log(sheet_list);
+            let result = xlsx.utils.sheet_to_json(sheetdetail1.Sheets[sheet_list[0]])
+            console.log(result);// xlsx output as json Array
+  
+            for (var i=0; i<result.length; i++){
+                console.log(result[i]);
+                const item = await productSchema.findOne({name:result[i].name}).exec()
+              if (!item) {
+              let uuid = 'PROD-'+crypto.pseudoRandomBytes(6).toString('hex'); 
+              console.log(uuid);
+              let product = result[i];
+              product.uuid = uuid;
+              const data = new productSchema(product)
+              const save = await data.save() 
+              console.log(result[i].name + "saved in mongodb");
+             }else{
+                console.log(result[i].name + " already exists in mongodb"); 
+                let inStock = item.InStock;
+                console.log(result[i].name + " in stock ",inStock); 
+                let new_qty = inStock + result[i].quantity;
+                console.log(result[i].name + " in stock updated",new_qty); 
+                let update_stock_result = await productSchema.findOneAndUpdate({name:result[i].name},{InStock :new_qty},{new:true}).exec();
+                console.log(update_stock_result);
+            }
+        }
+            return res.status(200).json({status:'success',message:'File uploaded successfully!','path':path});
+        }catch(err){
+            console.log(err)
+            return res.status(500).json({status:'failure',message:'File not uploaded...'}) 
+           }
+        });
 
 module.exports = router;

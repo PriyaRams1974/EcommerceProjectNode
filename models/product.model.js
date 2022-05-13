@@ -11,7 +11,8 @@ const productSchema = new mongoose.Schema({
     cost:{type:Number,require:true},
     desc:{type:String,require:true},
     adminUuid:{type:String,require:true},
-    categoryUuid:{type:String,require:true}
+    categoryUuid:{type:String,require:true},
+    InStock:{type:Number,require:true} 
 },
 {
     timestamps :true
