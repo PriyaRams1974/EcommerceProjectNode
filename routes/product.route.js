@@ -54,6 +54,45 @@ try{
 }
 })
 
+// router.post('/getAllCategories',isAdmin,async(req,res)=>{
+    router.get('/getAllCategories',async(req,res)=>{
+
+        try{
+            await categorySchema.find().exec().then(data=>{
+                res.json({status:'success',message:'show All categories',"data":data})
+            })
+        }catch(err){
+            res.json({'error':err.message});
+        }
+    })
+        
+    router.get('/searchCategoriesbyletters', async(req,res)=>{
+        try{
+            const data = await categorySchema.find({ categoryName : {$regex: req.query.categoryName, $options:"i"}}).exec();
+            if(data){
+                res.json({status:'success',data});
+            } else{
+                res.json({status:'failure'});   
+            }
+        }catch(err){
+            res.json({'err':err.message})
+        }
+        })
+        
+    router.get('/getitemsBasedonCategory',async(req,res)=>{
+        let cat_uuid = req.query.cat_uuid;
+        console.log("cat_uuid==>",cat_uuid);
+        try{
+            await productSchema.find({categoryUuid:cat_uuid}).exec().then(data=>{
+                res.json({status:'success',message:'show items of selected category',"data":data})
+            })
+        }catch(err){
+            res.json({'error':err.message});
+        }
+    })
+
+
+
 router.get('/showAllitems',async(req,res)=>{
     try{
         await productSchema.find().exec().then(data=>{
@@ -108,6 +147,23 @@ if(itemFetched){
 }
 })
 
+router.get('/getItemByUuid',async(req,res)=>{
+    try{
+        const itemUuid = req.query.item_uuid
+        console.log("item_uuid===>",itemUuid);
+        const item = await productSchema.findOne({uuid:itemUuid}).exec()
+        if(item){
+            console.log("success");
+            res.json({status:"success",'result':item})
+        }else{
+            res.json({status:'failure',message:'This product is not avalible!'})
+        }
+
+    }catch(err){
+        res.json({"error":err.message})
+    }
+})
+
 //search Individual product
 router.get('/searchItems',async(req,res)=>{
     try{
@@ -117,7 +173,7 @@ router.get('/searchItems',async(req,res)=>{
             console.log("success");
             res.json({status:"success",'result':item})
         }else{
-            res.json({status:'failure',message:'This product not avalible!'})
+            res.json({status:'failure',message:'This product is not avalible!'})
         }
 
     }catch(err){
@@ -125,11 +181,24 @@ router.get('/searchItems',async(req,res)=>{
     }
 })
 
+router.get('/itemsearchbyletters', async(req,res)=>{
+    try{
+        const data = await productSchema.find({ name : {$regex: req.query.name, $options:"i"}}).exec();
+        if(data){
+            res.json({status:'success',data});
+        } else{
+            res.json({status:'failure'});   
+        }
+    }catch(err){
+        res.json({'err':err.message})
+    }
+    })
 
-router.get('/getAllItems',async(req,res)=>{
+  
+router.get('/getAllItems',isAdmin,async(req,res)=>{
     try{
         await productSchema.find().exec().then(data=>{
-            res.json({status:'success',message:'you got a all products',"result":data})
+            res.json({status:'success',message:'all products',"result":data})
         }).catch(err=>{
             res.json({status:'success',message:err.message})
         })
@@ -191,11 +260,11 @@ router.get('/filterPrice',async(req,res)=>{
 })
 
 
-router.post('/updateItems',isAdmin,async(req,res)=>{
+router.put('/updateItems',isAdmin,async(req,res)=>{
 try{
     const uuid = req.body.uuid
     result = await productSchema.findOneAndUpdate({uuid:uuid},req.body,{new:true}).exec().then(result=>{
-        res.json({status:'success',message:'items are updated successfull!','result':result})
+        res.json({status:'success',message:'item  updated successfully!','result':result})
     })
 }catch(err){
     res.json({"error":err.message})
@@ -204,7 +273,7 @@ try{
 })
 
 
-router.post('/deleteItems',isAdmin,async(req,res)=>{
+router.delete('/deleteItems',isAdmin,async(req,res)=>{
     try{
         await productSchema.findOneAndDelete({uuid:req.query.uuid}).exec()
         res.json({status:'success',message:'item deleted successfully!'})

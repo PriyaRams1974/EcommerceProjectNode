@@ -24,8 +24,9 @@ function isAdmin (req,res,next){
     try{
         console.log("verify token");
         let token = req.header("token")
+        console.log("verify token",token);
         if(!token){
-            return res.json({status: "failure", "message": "Unauthorised access"})
+            return res.json({status: "failure", "message": "Token not found-Unauthorised access"})
         }
         const decode = jwt.verify(token, process.env.secrectKey);
         console.log(decode.uuid)

@@ -111,14 +111,14 @@ try{
             if(result){
                 const token = jwt.sign({uuid:user.uuid},process.env.secrectKey,{expiresIn:'1d'}) 
 
-                res.json({status:'success',message:'loggedin successfully','data':user,token})
+                return res.status(200).json({status:'success',message:'loggedin successfully','data':user,token})
                 
             }else{
-                res.json({message:'password does not match!'})
+                return res.status(400).json({message:'password does not match!'});
             }
         })
     }else{
-          res.json({status:'failure',message:'username not found!'})
+        return res.status(400).json({status:'failure',message:'username not found!'})
     }
     })
 
@@ -163,8 +163,6 @@ try{
     res.json({message:err.message})
 }
 })
-
-
 
 //user reset password
 router.post('/resetPassword',async(req,res)=>{
